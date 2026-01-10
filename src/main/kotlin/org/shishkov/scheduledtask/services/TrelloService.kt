@@ -2,6 +2,7 @@ package org.shishkov.scheduledtask.services
 
 import org.shishkov.scheduledtask.clients.TrelloClient
 import org.shishkov.scheduledtask.config.TrelloProperties
+import org.shishkov.scheduledtask.dto.TrelloBoardDto
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -15,34 +16,39 @@ class TrelloService(
     private val client: TrelloClient,
     private val props: TrelloProperties,
 ) {
-    private var boardIds = listOf<String>()
+    private var boards = listOf<TrelloBoardDto>()
 
     @Scheduled(fixedRate = 1, initialDelay = 0, timeUnit = TimeUnit.DAYS)
     fun updateBoardIds() {
-        println(boardIds)
-
-        boardIds = client.getBoardsIds()
-            .filter { it.idMemberCreator == props.myMemberId }
-            .map { it.id }
-
-        println(boardIds)
+        boards = client.getBoardsIds().filter { it.idMemberCreator == props.myMemberId }
     }
 
-    //todo сохранять файлы json в постоянную память
-    fun createJsonFiles() {
-        for (boardId in boardIds) {
-            val json = client.getBoardJson(boardId)
+    @Scheduled(fixedRate = 1, initialDelay = 0, timeUnit = TimeUnit.DAYS)
+    fun createJsonDumpFiles() {
+        for (board in boards) {
+            val json = client.getBoardJson(board.id)
 
             if (json.isNullOrEmpty()) {
-                //todo обработать ошибку, если вернулся пустой json
-                throw Exception("Board dump is empty")
+                //при доработке клиента такой ситуации не должно возникать так как будет обработка 400 и 500 кодов
+                continue
             }
 
-            val pathToJsonFile = Path("M:\\Development\\education\\ScheduledTask\\src\\main\\resources\\dump_$boardId.json")
+            val boardName = sanitizeBoardName(board.name)
+            val pathToJsonFile = Path("${props.dumpDirPath}\\$boardName.json")
+
             Files.writeString(pathToJsonFile, json, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,
                 StandardOpenOption.WRITE)
         }
+    }
+
+    /**
+     * Убирает все специальные символы из строки, чтобы Windows не ругался
+     */
+    private fun sanitizeBoardName(boardName: String): String {
+        return boardName.replace(Regex("[^a-яА-ЯёЁa-zA-Z\\s]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
     }
 }

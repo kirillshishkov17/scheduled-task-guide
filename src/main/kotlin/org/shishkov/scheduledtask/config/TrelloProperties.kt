@@ -7,4 +7,5 @@ data class TrelloProperties(
     val key: String,
     val token: String,
     val myMemberId: String,
+    val dumpDirPath: String,
 )
