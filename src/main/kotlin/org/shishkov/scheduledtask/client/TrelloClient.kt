@@ -1,4 +1,4 @@
-package org.shishkov.scheduledtask.clients
+package org.shishkov.scheduledtask.client
 
 import org.shishkov.scheduledtask.config.TrelloProperties
 import org.shishkov.scheduledtask.dto.TrelloBoardDto

@@ -1,6 +1,6 @@
-package org.shishkov.scheduledtask.services
+package org.shishkov.scheduledtask.service
 
-import org.shishkov.scheduledtask.clients.TrelloClient
+import org.shishkov.scheduledtask.client.TrelloClient
 import org.shishkov.scheduledtask.config.TrelloProperties
 import org.shishkov.scheduledtask.dto.TrelloBoardDto
 import org.springframework.scheduling.annotation.Scheduled
@@ -34,12 +34,13 @@ class TrelloService(
             }
 
             val boardName = sanitizeBoardName(board.name)
-            val pathToJsonFile = Path("${props.dumpDirPath}\\$boardName.json")
+            val pathToJsonFile = Path(props.dumpDirPath).resolve("$boardName.json")
 
             Files.writeString(pathToJsonFile, json, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE)
+                StandardOpenOption.WRITE
+            )
         }
     }
 
